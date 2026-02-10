@@ -3,9 +3,13 @@ name: Claude Issue Planner
 on:
   issues:
     types: [opened, edited]
+  issue_comment:
+    types: [created]
 
 jobs:
+  # --- When a NEW issue is opened ---
   claude-plan:
+    if: github.event_name == 'issues'
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -78,3 +82,88 @@ jobs:
             } catch (error) {
               console.log('No labels to add');
             }
+
+  # --- When someone COMMENTS on an issue ---
+  claude-respond:
+    if: |
+      github.event_name == 'issue_comment' &&
+      !github.event.issue.pull_request &&
+      github.event.comment.user.login != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install dependencies
+        run: |
+          rm -f package-lock.json
+          npm install --no-save --legacy-peer-deps @anthropic-ai/sdk mem0ai
+
+      - name: Fetch conversation history
+        id: conversation
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const comments = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              per_page: 20
+            });
+
+            const history = comments.data.map(c => ({
+              author: c.user.login,
+              body: c.body.substring(0, 2000),
+              isBot: c.user.login === 'github-actions[bot]',
+              created: c.created_at
+            }));
+
+            const fs = require('fs');
+            fs.writeFileSync('conversation-history.json', JSON.stringify(history, null, 2));
+
+            return history.length;
+
+      - name: Run Claude Issue Responder
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_AUTHOR: ${{ github.event.issue.user.login }}
+          ISSUE_LABELS: ${{ join(github.event.issue.labels.*.name, ',') }}
+          COMMENT_AUTHOR: ${{ github.event.comment.user.login }}
+          COMMENT_BODY: ${{ github.event.comment.body }}
+        run: node .github/scripts/claude-issue-responder.js
+
+      - name: Post response
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+
+            let responseBody = '';
+            try {
+              responseBody = fs.readFileSync('issue-response.md', 'utf8');
+            } catch (error) {
+              responseBody = '⚠️ Claude response failed. Check workflow logs for details.';
+            }
+
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.payload.issue.number,
+              body: responseBody
+            });

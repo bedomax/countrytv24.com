@@ -4,7 +4,7 @@
  * Claude Issue Planner with Mem0 Memory
  *
  * When an issue is created, Claude analyzes it, checks Mem0 for project context,
- * and responds with an implementation plan including branch name and steps.
+ * generates an implementation plan, and asks clarification questions.
  */
 
 import Anthropic from '@anthropic-ai/sdk';
@@ -35,20 +35,20 @@ async function main() {
 
     // --- Mem0: Get project context ---
     let projectMemories = '';
+    let mem0Client = null;
     if (mem0Key) {
       try {
         console.log('🧠 Fetching project memories from Mem0...');
-        const mem0 = new MemoryClient({ apiKey: mem0Key });
+        mem0Client = new MemoryClient({ apiKey: mem0Key });
 
-        // Search for relevant memories about this issue topic
-        const searchResults = await mem0.search(
+        const searchResults = await mem0Client.search(
           `${issueTitle} ${issueBody.substring(0, 200)}`,
           { user_id: MEM0_USER_ID }
         );
 
         if (searchResults && searchResults.length > 0) {
           projectMemories = searchResults
-            .slice(0, 5)
+            .slice(0, 10)
             .map(m => `- ${m.memory || m.text || JSON.stringify(m)}`)
             .join('\n');
           console.log(`✅ Found ${searchResults.length} relevant memories`);
@@ -64,9 +64,7 @@ async function main() {
     let projectContext = '';
     try {
       if (fs.existsSync('CLAUDE.md')) {
-        const claudeMd = fs.readFileSync('CLAUDE.md', 'utf8');
-        // Take first 3000 chars for context
-        projectContext = claudeMd.substring(0, 3000);
+        projectContext = fs.readFileSync('CLAUDE.md', 'utf8').substring(0, 4000);
       }
     } catch (error) {
       console.log('⚠️ Could not read CLAUDE.md');
@@ -105,12 +103,11 @@ async function main() {
     fs.writeFileSync('issue-labels.json', JSON.stringify(labels));
 
     // --- Store in Mem0 ---
-    if (mem0Key) {
+    if (mem0Client) {
       try {
         console.log('🧠 Storing issue context in Mem0...');
-        const mem0 = new MemoryClient({ apiKey: mem0Key });
-        await mem0.add(
-          [{ role: 'user', content: `Issue #${issueNumber}: "${issueTitle}". ${issueBody.substring(0, 500)}. Plan was created for this issue.` }],
+        await mem0Client.add(
+          [{ role: 'user', content: `Issue #${issueNumber}: "${issueTitle}" by @${issueAuthor}. ${issueBody.substring(0, 500)}. Implementation plan was created.` }],
           { user_id: MEM0_USER_ID }
         );
         console.log('✅ Issue context stored in Mem0');
@@ -146,7 +143,7 @@ function buildPrompt({ title, body, number, author, labels, memories, projectCon
   if (memories) {
     memorySection = `
 ## Project Memory (from Mem0)
-These are relevant things we remember about this project:
+These are relevant things we know about this project from previous issues, PRs, and decisions:
 ${memories}
 `;
   }
@@ -159,7 +156,7 @@ ${projectContext}
 `;
   }
 
-  return `You are a senior software architect analyzing a GitHub issue for the CountryTV24 project (a 24/7 country music streaming platform).
+  return `You are a senior software architect and helpful collaborator analyzing a GitHub issue for the CountryTV24 project (a 24/7 country music streaming platform).
 
 # Issue #${number}
 
@@ -175,55 +172,60 @@ ${contextSection}
 
 # Your Task
 
-Analyze this issue and create a detailed implementation plan. Respond in the following format:
+Analyze this issue and create a detailed implementation plan. Then, ask 2-3 clarification questions to make sure you understand the requirements correctly.
 
-## 1. Understanding
+Respond in the following format:
+
+## 🎯 Understanding
 - What is being requested? (1-2 sentences, simple language)
 - Why does it matter? (user impact)
 
-## 2. Classification
+## 📊 Classification
 - **Type**: feature / bug / refactor / docs / chore
 - **Priority**: high / medium / low
-- **Complexity**: small (< 1 hour) / medium (1-4 hours) / large (4+ hours)
+- **Complexity**: small (< 1 hour) / medium (2-4 hours) / large (4+ hours)
 - **Risk**: low / medium / high
 
-## 3. Branch Name
-Suggest a branch name following convention:
-\`feature/short-description\` or \`fix/short-description\` or \`refactor/short-description\`
+## 🌿 Branch Name
+\`feature/short-description\` or \`fix/short-description\`
 
-## 4. Implementation Plan
+## 📋 Implementation Plan
 
 ### Files to Create/Modify
-List each file with what needs to change:
-- \`path/to/file.ts\` - Description of changes
+List each file with what needs to change.
 
-### Step-by-Step Plan
-1. [Step 1 with details]
-2. [Step 2 with details]
-3. [Step 3 with details]
-...
+### Step-by-Step
+Numbered steps with clear actions.
 
 ### Technical Considerations
-- Dependencies needed
-- API changes
-- Database/storage changes
-- Frontend vs backend changes
+Dependencies, API changes, storage, frontend vs backend.
 
-## 5. Testing Plan
-- How to verify the changes work
-- Edge cases to consider
+## 🧪 Testing Plan
+How to verify, edge cases to consider.
 
-## 6. Suggested Labels
-List appropriate GitHub labels: enhancement, bug, documentation, etc.
+## ❓ Questions Before Starting
+
+**I'd like to clarify a few things before we start:**
+
+1. [Question about scope, approach, or preference]
+2. [Question about technical choice or trade-off]
+3. [Question about priority or dependencies]
+
+> Reply to this comment and I'll refine the plan based on your answers!
+
+## 🏷️ Suggested Labels
+List appropriate labels.
 
 ---
 
 **Guidelines**:
 - Be specific about file paths and code locations
-- Keep the plan actionable - someone should be able to follow it step by step
+- Keep the plan actionable
 - Consider the existing tech stack: vanilla JS frontend, Express + TypeScript backend, Vercel serverless
-- Reference existing patterns in the codebase when possible
-- Keep language simple and clear`;
+- Reference existing patterns in the codebase
+- Make the questions specific and helpful, not generic
+- The questions should help you make better implementation decisions
+- Be friendly and conversational`;
 }
 
 function detectLabels(title, body) {
@@ -245,11 +247,10 @@ function detectLabels(title, body) {
   if (text.includes('security') || text.includes('vulnerability') || text.includes('auth')) {
     labels.push('security');
   }
-  if (text.includes('ui') || text.includes('design') || text.includes('style') || text.includes('css')) {
+  if (text.includes('ui') || text.includes('design') || text.includes('style') || text.includes('css') || text.includes('mode')) {
     labels.push('ui');
   }
 
-  // Default if nothing detected
   if (labels.length === 0) {
     labels.push('needs-triage');
   }
@@ -271,26 +272,15 @@ ${plan}
 
 ---
 
-## Next Steps
-
-1. Review this plan and comment if you want changes
-2. Create a branch with the suggested name
-3. Implement following the step-by-step plan
-4. Create a PR referencing this issue: \`Closes #${issueNumber}\`
-
-> **Tip**: You can use Spec-Kit commands to refine this plan:
-> - \`/speckit.specify\` to create a detailed specification
-> - \`/speckit.plan\` to generate technical architecture
-> - \`/speckit.tasks\` to break it into tasks
-> - \`/speckit.implement\` to start coding
-
----
+> 💬 **This is an interactive plan!** Reply to this comment with answers to the questions above, ask your own questions, or request changes to the plan. I'll respond and update the plan accordingly.
 
 <details>
 <summary>About this plan</summary>
 
-This implementation plan was automatically generated by Claude AI when this issue was created.
-Project memory is maintained via Mem0 for context across issues.
+This implementation plan was automatically generated by Claude AI. I have access to:
+- **Project memory** (Mem0): I remember previous issues, PRs, and project decisions
+- **Codebase context**: I can reference actual files and patterns in the project
+- **Conversation**: I'll respond to your comments on this issue
 
 **Limitations**: AI analysis may miss project-specific nuances. Always review before implementing.
 </details>
