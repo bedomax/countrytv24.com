@@ -266,7 +266,7 @@ gh pr review [PR_NUMBER] --approve --body "[review content]"
 
 ## 🎯 Overall Assessment
 
-This PR adds Spotify playlist search functionality to Country TV. The implementation is solid with good error handling and user experience considerations.
+This PR adds Spotify playlist search functionality to CountryTV24. The implementation is solid with good error handling and user experience considerations.
 
 **Overall Rating**: Good ⭐⭐⭐⭐
 **Recommendation**: Approve with minor suggestions ✅

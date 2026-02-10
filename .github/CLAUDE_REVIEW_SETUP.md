@@ -342,7 +342,7 @@ Error: ANTHROPIC_API_KEY secret is not configured
 - [Anthropic Documentation](https://docs.anthropic.com/)
 - [Claude API Reference](https://docs.anthropic.com/en/api/messages)
 - [GitHub Actions Documentation](https://docs.github.com/en/actions)
-- [Country TV Repository](https://github.com/bedomax/countryTV)
+- [CountryTV24 Repository](https://github.com/bedomax/countrytv24.com)
 
 ## 🎨 Customization Ideas
 
@@ -408,6 +408,6 @@ Have ideas to improve the Claude review workflow?
 
 ---
 
-**Created for**: Country TV Project
+**Created for**: CountryTV24 Project
 **Last Updated**: 2025-10-22
 **Version**: 1.0.0

@@ -1,6 +1,7 @@
 let player;
 let playlist = [];
 let currentIndex = 0;
+let userTriggeredSkip = false;
 // Removed idle timer functionality
 
 // Load YouTube IFrame Player API
@@ -303,11 +304,16 @@ function playSong(index) {
 
         updateNowPlaying(index);
         renderPlaylist();
+        mem0RecordEvent('play', song);
     }
 }
 
 // Play next song
 function playNext() {
+    if (userTriggeredSkip && playlist[currentIndex]) {
+        mem0RecordEvent('skip', playlist[currentIndex]);
+    }
+    userTriggeredSkip = false;
     currentIndex = (currentIndex + 1) % playlist.length;
     playSong(currentIndex);
 }
@@ -335,13 +341,28 @@ function setupUI() {
     document.getElementById('prev-btn').addEventListener('click', playPrev);
 
     // Next button
-    document.getElementById('next-btn').addEventListener('click', playNext);
+    document.getElementById('next-btn').addEventListener('click', () => {
+        userTriggeredSkip = true;
+        playNext();
+    });
 
     // Playlist button
     document.getElementById('playlist-btn').addEventListener('click', togglePlaylist);
 
     // Close playlist button
     document.getElementById('close-playlist').addEventListener('click', closePlaylist);
+
+    // Like button
+    const likeBtn = document.getElementById('like-btn');
+    if (likeBtn) likeBtn.addEventListener('click', handleLikeClick);
+
+    // Memory button
+    const memoryBtn = document.getElementById('memory-btn');
+    if (memoryBtn) memoryBtn.addEventListener('click', toggleMemorySidebar);
+
+    // Close memory button
+    const closeMemoryBtn = document.getElementById('close-memory');
+    if (closeMemoryBtn) closeMemoryBtn.addEventListener('click', closeMemorySidebar);
 
     // Click anywhere to start/unmute
     document.addEventListener('click', handleUserInteraction);
@@ -378,8 +399,8 @@ function handleYeehawClick() {
 
 // Handle user interaction (click/touch)
 function handleUserInteraction(event) {
-    // Don't interfere with control button clicks or yeehaw button
-    if (event.target.closest('.control-btn') || event.target.closest('#yeehaw-button')) {
+    // Don't interfere with control button clicks, yeehaw button, or sidebars
+    if (event.target.closest('.control-btn') || event.target.closest('#yeehaw-button') || event.target.closest('.memory-sidebar')) {
         return;
     }
     
@@ -403,6 +424,7 @@ function handleUserInteraction(event) {
 
 // Toggle playlist
 function togglePlaylist() {
+    closeMemorySidebar();
     const sidebar = document.getElementById('playlist-sidebar');
     sidebar.classList.toggle('open');
 }
@@ -418,7 +440,12 @@ function closePlaylist() {
 // Keyboard controls
 document.addEventListener('keydown', (e) => {
     if (e.key === 'ArrowRight' || e.key === 'n' || e.key === 'N') {
+        userTriggeredSkip = true;
         playNext();
+    } else if (e.key === 'l' || e.key === 'L') {
+        handleLikeClick();
+    } else if (e.key === 'm' || e.key === 'M') {
+        toggleMemorySidebar();
     } else if (e.key === 'ArrowLeft' || e.key === 'b' || e.key === 'B') {
         playPrev();
     } else if (e.key === ' ') {
@@ -435,6 +462,7 @@ document.addEventListener('keydown', (e) => {
         togglePlaylist();
     } else if (e.key === 'Escape') {
         closePlaylist();
+        closeMemorySidebar();
     }
 });
 
@@ -489,7 +517,8 @@ function startViewerCounter() {
     
     // Check if Socket.IO is available (local development)
     // Also check if we're on Vercel by domain or if Socket.IO fails
-    const isVercel = window.location.hostname.includes('vercel.app') || 
+    const isVercel = window.location.hostname.includes('countrytv24.com') ||
+                     window.location.hostname.includes('vercel.app') ||
                      window.location.hostname.includes('vercel.com') ||
                      typeof io === 'undefined';
     
@@ -650,6 +679,132 @@ function openCurrentSongInSpotify() {
 
     const currentSong = playlist[currentIndex];
     openSongInSpotify(currentSong.artist, currentSong.title);
+}
+
+// ============================================
+// Mem0 Memory Integration
+// ============================================
+
+let mem0LastRecorded = {};
+
+async function mem0RecordEvent(action, song) {
+    const key = `${action}_${song.title}_${song.artist}`;
+    const now = Date.now();
+    if (mem0LastRecorded[key] && (now - mem0LastRecorded[key]) < 60000) {
+        return;
+    }
+    mem0LastRecorded[key] = now;
+
+    try {
+        await fetch('/api/mem0', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                action: action,
+                song: { title: song.title, artist: song.artist }
+            })
+        });
+        console.log(`🧠 Mem0: Recorded ${action} for "${song.title}" by ${song.artist}`);
+    } catch (error) {
+        console.log('⚠️ Mem0: Failed to record event:', error);
+    }
+}
+
+async function mem0GetRecommendations() {
+    try {
+        const response = await fetch('/api/mem0?action=recommendations');
+        if (!response.ok) throw new Error('Failed to fetch recommendations');
+        return await response.json();
+    } catch (error) {
+        console.log('⚠️ Mem0: Failed to get recommendations:', error);
+        return null;
+    }
+}
+
+async function mem0GetMemories() {
+    try {
+        const response = await fetch('/api/mem0?action=memories');
+        if (!response.ok) throw new Error('Failed to fetch memories');
+        return await response.json();
+    } catch (error) {
+        console.log('⚠️ Mem0: Failed to get memories:', error);
+        return null;
+    }
+}
+
+// ============================================
+// Like Button
+// ============================================
+
+function handleLikeClick() {
+    if (playlist.length === 0 || currentIndex < 0) return;
+
+    const song = playlist[currentIndex];
+    mem0RecordEvent('like', song);
+
+    const likeBtn = document.getElementById('like-btn');
+    if (likeBtn) {
+        likeBtn.classList.add('liked');
+        setTimeout(() => likeBtn.classList.remove('liked'), 500);
+    }
+
+    console.log(`❤️ Liked: "${song.title}" by ${song.artist}`);
+}
+
+// ============================================
+// Memory Sidebar
+// ============================================
+
+function toggleMemorySidebar() {
+    const sidebar = document.getElementById('memory-sidebar');
+    const isOpen = sidebar.classList.contains('open');
+
+    closePlaylist();
+    sidebar.classList.toggle('open');
+
+    if (!isOpen) {
+        loadMemoryPanel();
+    }
+}
+
+function closeMemorySidebar() {
+    const sidebar = document.getElementById('memory-sidebar');
+    if (sidebar) sidebar.classList.remove('open');
+}
+
+async function loadMemoryPanel() {
+    const recsContainer = document.getElementById('recommendations-list');
+    const memContainer = document.getElementById('memories-list');
+
+    if (recsContainer) {
+        recsContainer.innerHTML = '<div class="loading">Analyzing your taste...</div>';
+    }
+    if (memContainer) {
+        memContainer.innerHTML = '<div class="loading">Loading memories...</div>';
+    }
+
+    const recsData = await mem0GetRecommendations();
+    if (recsContainer) {
+        if (recsData && recsData.recommendations && recsData.recommendations.length > 0) {
+            recsContainer.innerHTML = recsData.recommendations
+                .map(rec => `<div class="memory-item">${rec.memory || rec.text || JSON.stringify(rec)}</div>`)
+                .join('');
+        } else {
+            recsContainer.innerHTML = '<div class="memory-item">Keep listening! We\'ll learn your taste over time.</div>';
+        }
+    }
+
+    const memData = await mem0GetMemories();
+    if (memContainer) {
+        if (memData && memData.memories && memData.memories.length > 0) {
+            memContainer.innerHTML = memData.memories
+                .slice(0, 10)
+                .map(mem => `<div class="memory-item">${mem.memory || mem.text || JSON.stringify(mem)}</div>`)
+                .join('');
+        } else {
+            memContainer.innerHTML = '<div class="memory-item">No memories yet. Start listening!</div>';
+        }
+    }
 }
 
 // Open a specific song in Spotify

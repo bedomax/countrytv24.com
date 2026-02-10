@@ -27,6 +27,9 @@ if (!isVercel) {
 
 const PORT = process.env.PORT || 3000;
 
+// Parse JSON request bodies
+app.use(express.json());
+
 // Serve static files from web app public directory
 app.use(express.static(path.join(__dirname, '../../apps/web/public')));
 
@@ -131,9 +134,69 @@ app.get('/api/new-songs', (_req, res) => {
   }
 });
 
+// --- Mem0 Memory Endpoints ---
+app.post('/api/mem0', async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  try {
+    const { mem0Service } = await import('../services/mem0-service.js');
+
+    const ip = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const ipShort = ip.toString().substring(0, 8);
+    const uaShort = userAgent.toString().substring(0, 8);
+    const userId = `${ipShort}_${uaShort}`;
+
+    const { action, song } = req.body;
+
+    if (action === 'play') {
+      await mem0Service.recordSongPlay(userId, song);
+    } else if (action === 'like') {
+      await mem0Service.recordLike(userId, song);
+    } else if (action === 'skip') {
+      await mem0Service.recordSkip(userId, song);
+    }
+
+    res.json({ status: 'ok', userId });
+  } catch (error) {
+    console.error('Mem0 error:', error);
+    res.status(500).json({ error: 'Mem0 service error' });
+  }
+});
+
+app.get('/api/mem0', async (req, res) => {
+  res.header('Access-Control-Allow-Origin', '*');
+  try {
+    const { mem0Service } = await import('../services/mem0-service.js');
+
+    const ip = req.headers['x-forwarded-for'] || req.ip || 'unknown';
+    const userAgent = req.headers['user-agent'] || 'unknown';
+    const ipShort = ip.toString().substring(0, 8);
+    const uaShort = userAgent.toString().substring(0, 8);
+    const userId = `${ipShort}_${uaShort}`;
+
+    const action = req.query.action;
+
+    if (action === 'memories') {
+      const memories = await mem0Service.getUserMemories(userId);
+      return res.json({ userId, memories });
+    }
+
+    if (action === 'recommendations') {
+      const results = await mem0Service.searchMemories(userId, 'songs and artists I like');
+      return res.json({ userId, recommendations: results });
+    }
+
+    const memories = await mem0Service.getUserMemories(userId);
+    res.json({ userId, memoryCount: memories?.length || 0, hasMemories: (memories?.length || 0) > 0 });
+  } catch (error) {
+    console.error('Mem0 error:', error);
+    res.status(500).json({ error: 'Mem0 service error' });
+  }
+});
+
 // Start server
 server.listen(PORT, () => {
-  console.log('🎸 Country TV Server is running!');
+  console.log('🎸 CountryTV24 Server is running!');
   console.log('');
   console.log(`   🌐 Open in browser: http://localhost:${PORT}`);
   if (isVercel) {

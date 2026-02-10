@@ -98,7 +98,7 @@
 
 ## 🔗 URLs to Update
 
-Replace `https://country-tv.vercel.app/` with your actual domain:
+Replace URLs with your actual domain (`https://countrytv24.com/`):
 - Open Graph URLs
 - Twitter URLs
 - Canonical URL

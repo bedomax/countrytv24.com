@@ -941,3 +941,106 @@ body:hover {
         font-size: 1rem;
     }
 }
+
+/* ============================================
+   Mem0 Memory Integration Styles
+   ============================================ */
+
+/* Like Button */
+.like-btn {
+    background: linear-gradient(135deg, #ff4757 0%, #ff6b81 100%) !important;
+    border-color: rgba(255, 71, 87, 0.5) !important;
+    box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3) !important;
+    position: relative;
+    overflow: hidden;
+}
+
+.like-btn.liked {
+    animation: likedPulse 0.5s ease;
+}
+
+@keyframes likedPulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.3); }
+    100% { transform: scale(1); }
+}
+
+.like-btn:hover {
+    background: linear-gradient(135deg, #ff6b81 0%, #ff4757 100%) !important;
+    transform: scale(1.1);
+    border-color: rgba(255, 71, 87, 0.8) !important;
+    box-shadow: 0 6px 25px rgba(255, 71, 87, 0.5) !important;
+}
+
+/* Memory Button */
+.memory-btn {
+    background: linear-gradient(135deg, #a855f7 0%, #c084fc 100%) !important;
+    border-color: rgba(168, 85, 247, 0.5) !important;
+    box-shadow: 0 4px 15px rgba(168, 85, 247, 0.3) !important;
+}
+
+.memory-btn:hover {
+    background: linear-gradient(135deg, #c084fc 0%, #a855f7 100%) !important;
+    transform: scale(1.1);
+    border-color: rgba(168, 85, 247, 0.8) !important;
+    box-shadow: 0 6px 25px rgba(168, 85, 247, 0.5) !important;
+}
+
+/* Memory Sidebar */
+.memory-sidebar {
+    position: fixed;
+    top: 0;
+    left: -400px;
+    width: 400px;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.95);
+    backdrop-filter: blur(20px);
+    z-index: 20;
+    transition: left 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    border-right: 1px solid rgba(168, 85, 247, 0.3);
+    display: flex;
+    flex-direction: column;
+}
+
+.memory-sidebar.open {
+    left: 0;
+}
+
+.memory-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px;
+}
+
+.memory-section {
+    margin-bottom: 30px;
+}
+
+.memory-section-title {
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: rgba(168, 85, 247, 0.8);
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(168, 85, 247, 0.2);
+}
+
+.memory-item {
+    padding: 15px;
+    margin-bottom: 10px;
+    background: rgba(168, 85, 247, 0.1);
+    border-radius: 12px;
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    font-size: 0.9rem;
+    line-height: 1.4;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+@media (max-width: 768px) {
+    .memory-sidebar {
+        width: 100%;
+        left: -100%;
+    }
+}

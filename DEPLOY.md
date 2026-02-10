@@ -21,7 +21,7 @@
    - Set up and deploy? **Y**
    - Which scope? Choose your account
    - Link to existing project? **N**
-   - Project name: `country-tv` (or your preferred name)
+   - Project name: `countrytv24` (or your preferred name)
    - Directory: `./`
    - Override settings? **N**
 
