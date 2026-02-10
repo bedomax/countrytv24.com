@@ -62,6 +62,7 @@ jobs:
         id: claude-review
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
           PR_TITLE: ${{ fromJSON(steps.pr-metadata.outputs.result).title }}
           PR_AUTHOR: ${{ fromJSON(steps.pr-metadata.outputs.result).author }}
           PR_NUMBER: ${{ fromJSON(steps.pr-metadata.outputs.result).number }}
@@ -70,7 +71,7 @@ jobs:
           PR_BODY: ${{ fromJSON(steps.pr-metadata.outputs.result).body }}
         run: |
           # Install dependencies
-          npm install --no-save @anthropic-ai/sdk
+          npm install --no-save @anthropic-ai/sdk mem0ai
 
           # Run Claude review script
           node .github/scripts/claude-review.js

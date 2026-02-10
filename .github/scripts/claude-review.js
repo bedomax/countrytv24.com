@@ -8,11 +8,13 @@
  */
 
 import Anthropic from '@anthropic-ai/sdk';
+import MemoryClient from 'mem0ai';
 import fs from 'fs';
 
 // Configuration
 const MAX_DIFF_LENGTH = 100000; // Claude's context limit consideration
-const CLAUDE_MODEL = 'claude-sonnet-4-20250514'; // Use stable Claude 3.5 Sonnet model
+const CLAUDE_MODEL = 'claude-sonnet-4-20250514';
+const MEM0_USER_ID = 'countrytv24-project';
 
 async function main() {
   try {
@@ -79,7 +81,37 @@ async function main() {
     // Initialize Claude client
     const client = new Anthropic({ apiKey });
 
-    // Create the review prompt
+    // Fetch project memories from Mem0 for context
+    let projectMemories = '';
+    const mem0ApiKey = process.env.MEM0_API_KEY;
+    let mem0Client = null;
+
+    if (mem0ApiKey) {
+      try {
+        console.log('🧠 Fetching project memories from Mem0...');
+        mem0Client = new MemoryClient({ apiKey: mem0ApiKey });
+
+        // Search for relevant memories about the changed files and PR context
+        const searchQuery = `PR changes in files: ${changedFiles.slice(0, 10).join(', ')}. ${prTitle}`;
+        const memories = await mem0Client.search(searchQuery, { user_id: MEM0_USER_ID });
+
+        if (memories && memories.length > 0) {
+          projectMemories = memories
+            .slice(0, 10)
+            .map(m => `- ${m.memory}`)
+            .join('\n');
+          console.log(`🧠 Found ${memories.length} relevant memories`);
+        } else {
+          console.log('🧠 No relevant memories found');
+        }
+      } catch (memError) {
+        console.log('⚠️ Mem0 fetch skipped:', memError.message);
+      }
+    } else {
+      console.log('ℹ️ MEM0_API_KEY not set, skipping memory context');
+    }
+
+    // Create the review prompt (with memory context if available)
     const prompt = createReviewPrompt({
       title: prTitle,
       author: prAuthor,
@@ -88,7 +120,8 @@ async function main() {
       additions: prAdditions,
       deletions: prDeletions,
       changedFiles,
-      diff: diffToReview
+      diff: diffToReview,
+      projectMemories
     });
 
     // Call Claude API
@@ -104,6 +137,21 @@ async function main() {
 
     // Extract the review
     const review = response.content[0].text;
+
+    // Store PR review context in Mem0 for future reference
+    if (mem0Client) {
+      try {
+        console.log('🧠 Storing PR review context in Mem0...');
+        const reviewSummary = `PR #${prNumber} "${prTitle}" by @${prAuthor}: Changed ${changedFiles.length} files (+${prAdditions} -${prDeletions}). Files: ${changedFiles.slice(0, 5).join(', ')}`;
+        await mem0Client.add(
+          [{ role: 'user', content: reviewSummary }],
+          { user_id: MEM0_USER_ID }
+        );
+        console.log('🧠 PR context stored in Mem0');
+      } catch (memError) {
+        console.log('⚠️ Mem0 store skipped:', memError.message);
+      }
+    }
 
     // Save review to file
     const reviewOutput = formatReviewOutput(review, prNumber, prAuthor);
@@ -197,8 +245,18 @@ If you expected changes to be reviewed, please check:
 `;
 }
 
-function createReviewPrompt({ title, author, number, body, additions, deletions, changedFiles, diff }) {
+function createReviewPrompt({ title, author, number, body, additions, deletions, changedFiles, diff, projectMemories }) {
+  const memoryContext = projectMemories ? `
+# Project Memory Context
+
+The following are relevant memories from previous PRs and project decisions. Use these to provide more contextual reviews:
+
+${projectMemories}
+
+` : '';
+
   return `You are an expert code reviewer performing a comprehensive code review for a GitHub Pull Request.
+${memoryContext}
 
 # Pull Request Information
 
