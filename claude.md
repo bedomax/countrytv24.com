@@ -419,3 +419,10 @@ When working on this project:
 **Current Song Count**: 38+
 **Deployment Status**: Live on Vercel
 **Maintenance**: Active development
+
+## Active Technologies
+- JavaScript (ES2020, browser) + TypeScript (Node.js 18+, backend) + YouTube IFrame Player API (existing), Playwright (existing scraper tooling) (001-handle-broken-videos)
+- `apps/web/public/playlist.json` (flat JSON file, no database) (001-handle-broken-videos)
+
+## Recent Changes
+- 001-handle-broken-videos: Added JavaScript (ES2020, browser) + TypeScript (Node.js 18+, backend) + YouTube IFrame Player API (existing), Playwright (existing scraper tooling)
