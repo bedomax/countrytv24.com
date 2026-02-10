@@ -15,7 +15,8 @@
     "dev": "npm run scrape && npm run serve",
     "web": "npm run serve",
     "appletv": "echo 'AppleTV app coming soon...'",
-    "vercel-build": "npm run scrape"
+    "vercel-build": "npm run scrape",
+    "validate-playlist": "npx tsx backend/scrapers/validate-playlist.ts"
   },
   "dependencies": {
     "@browserbasehq/stagehand": "latest",

@@ -23,11 +23,11 @@ async function loadPlaylist() {
     try {
         const response = await fetch('playlist.json');
         const data = await response.json();
-        const filteredSongs = data.songs.filter(song => song.youtubeId);
+        const filteredSongs = data.songs.filter(song => song.youtubeId && !song.unavailable);
 
         if (filteredSongs.length === 0) {
             document.getElementById('playlist-items').innerHTML =
-                '<div class="loading">No videos available. Please run the scraper first.</div>';
+                '<div class="loading">No content available. All videos are currently unavailable.</div>';
             return;
         }
 
@@ -84,7 +84,8 @@ function initPlayer(videoId) {
         },
         events: {
             onReady: onPlayerReady,
-            onStateChange: onPlayerStateChange
+            onStateChange: onPlayerStateChange,
+            onError: onPlayerError
         }
     });
 }
@@ -189,6 +190,29 @@ function onPlayerStateChange(event) {
     }
 }
 
+// Handle YouTube player errors — auto-skip broken videos
+function onPlayerError(event) {
+    const errorCode = event.data;
+    const song = playlist[currentIndex];
+    const videoId = song ? song.youtubeId : 'unknown';
+
+    console.warn(`[CountryTV24] Video error ${errorCode} for "${song ? song.title : 'unknown'}" (${videoId})`);
+
+    // Track broken IDs in sessionStorage to avoid retrying in this session
+    const brokenIds = JSON.parse(sessionStorage.getItem('brokenVideoIds') || '[]');
+    if (videoId !== 'unknown' && !brokenIds.includes(videoId)) {
+        brokenIds.push(videoId);
+        sessionStorage.setItem('brokenVideoIds', JSON.stringify(brokenIds));
+    }
+
+    // Auto-skip for actionable error codes (invalid ID, not found, not embeddable)
+    const actionableCodes = [2, 100, 101, 150];
+    if (actionableCodes.includes(errorCode)) {
+        playNext();
+    }
+    // Error code 5 (HTML5 player error) is transient — log only, do not skip
+}
+
 // Show autoplay message
 function showAutoplayMessage() {
     const message = document.createElement('div');
@@ -289,6 +313,13 @@ function playSong(index) {
     if (index >= 0 && index < playlist.length) {
         currentIndex = index;
         const song = playlist[index];
+
+        // Skip songs we already know are broken this session
+        const brokenIds = JSON.parse(sessionStorage.getItem('brokenVideoIds') || '[]');
+        if (brokenIds.includes(song.youtubeId)) {
+            playNext();
+            return;
+        }
 
         if (player && player.loadVideoById) {
             console.log(`🎵 Loading song: ${song.title} - ${song.artist}`);
