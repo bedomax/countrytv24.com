@@ -70,9 +70,9 @@ jobs:
           PR_DELETIONS: ${{ fromJSON(steps.pr-metadata.outputs.result).deletions }}
           PR_BODY: ${{ fromJSON(steps.pr-metadata.outputs.result).body }}
         run: |
-          # Install dependencies (remove lockfile to avoid conflicts)
+          # Install dependencies (legacy-peer-deps to resolve mem0ai peer conflict)
           rm -f package-lock.json
-          npm install --no-save @anthropic-ai/sdk mem0ai
+          npm install --no-save --legacy-peer-deps @anthropic-ai/sdk mem0ai
 
           # Run Claude review script
           node .github/scripts/claude-review.js

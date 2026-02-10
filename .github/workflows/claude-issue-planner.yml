@@ -23,7 +23,7 @@ jobs:
       - name: Install dependencies
         run: |
           rm -f package-lock.json
-          npm install --no-save @anthropic-ai/sdk mem0ai
+          npm install --no-save --legacy-peer-deps @anthropic-ai/sdk mem0ai
 
       - name: Run Claude Issue Planner
         env:
