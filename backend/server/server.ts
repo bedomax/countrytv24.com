@@ -133,7 +133,7 @@ app.get('/api/new-songs', (_req, res) => {
 
 // Start server
 server.listen(PORT, () => {
-  console.log('🎸 Country TV Server is running!');
+  console.log('🎸 CountryTV24 Server is running!');
   console.log('');
   console.log(`   🌐 Open in browser: http://localhost:${PORT}`);
   if (isVercel) {

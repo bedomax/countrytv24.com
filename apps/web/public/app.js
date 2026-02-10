@@ -489,7 +489,8 @@ function startViewerCounter() {
     
     // Check if Socket.IO is available (local development)
     // Also check if we're on Vercel by domain or if Socket.IO fails
-    const isVercel = window.location.hostname.includes('vercel.app') || 
+    const isVercel = window.location.hostname.includes('countrytv24.com') ||
+                     window.location.hostname.includes('vercel.app') ||
                      window.location.hostname.includes('vercel.com') ||
                      typeof io === 'undefined';
     

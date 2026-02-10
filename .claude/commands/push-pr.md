@@ -281,7 +281,7 @@ LINES_CHANGED=$(git diff --stat origin/main...HEAD | tail -1 | awk '{print $4+$6
 ```markdown
 ## What's New
 
-Added the ability to search your Spotify playlists and add your favorite country songs to Country TV. Now you can personalize your streaming experience with your own music collection!
+Added the ability to search your Spotify playlists and add your favorite country songs to CountryTV24. Now you can personalize your streaming experience with your own music collection!
 
 ## Why This Matters
 

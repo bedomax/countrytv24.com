@@ -1,11 +1,11 @@
-# Country TV - Claude Project Context
+# CountryTV24 - Claude Project Context
 
 ## Project Overview
 
-Country TV is a 24/7 live streaming country music platform that plays Billboard chart hits with real-time viewer counter and authentic TV broadcast effects. Built with vanilla JavaScript, Node.js, and deployed on Vercel.
+CountryTV24 is a 24/7 live streaming country music platform that plays Billboard chart hits with real-time viewer counter and authentic TV broadcast effects. Built with vanilla JavaScript, Node.js, and deployed on Vercel.
 
-**Live URL**: [Your Vercel deployment URL]
-**Repository**: https://github.com/bedomax/countryTV
+**Live URL**: https://countrytv24.com
+**Repository**: https://github.com/bedomax/countrytv24.com
 
 ## Tech Stack
 
@@ -30,7 +30,7 @@ Country TV is a 24/7 live streaming country music platform that plays Billboard 
 ## Project Structure
 
 ```
-countryTV/
+countrytv24.com/
 ├── apps/
 │   ├── web/
 │   │   └── public/           # Static web app
@@ -82,7 +82,7 @@ countryTV/
 
 1. **Spotify Playlist Integration** (commit: 66e8376)
    - Added Spotify search button to find user's favorite songs
-   - Search Spotify playlists and save songs to Country TV
+   - Search Spotify playlists and save songs to CountryTV24
    - YouTube video search integration for found songs
    - Located in: `apps/web/public/index.html` (Spotify search modal)
 
@@ -386,10 +386,10 @@ open http://localhost:3000
 vercel
 
 # Test viewer counter API
-curl https://your-app.vercel.app/api/viewer-count?action=join
+curl https://countrytv24.com/api/viewer-count?action=join
 
 # Check SEO
-curl https://your-app.vercel.app | grep -i "meta"
+curl https://countrytv24.com | grep -i "meta"
 ```
 
 ## Useful Context for Claude
@@ -415,7 +415,7 @@ When working on this project:
 
 ---
 
-**Last Updated**: 2025-10-22
+**Last Updated**: 2026-02-10
 **Current Song Count**: 38+
 **Deployment Status**: Live on Vercel
 **Maintenance**: Active development

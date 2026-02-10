@@ -1,4 +1,4 @@
-# 🤠 Country TV
+# 🤠 CountryTV24
 
 A live streaming country music platform that plays 24/7 country hits from Billboard charts with real-time viewer counter and TV broadcast effects.
 
@@ -42,8 +42,8 @@ A live streaming country music platform that plays 24/7 country hits from Billbo
 ### Local Development
 ```bash
 # Clone the repo
-git clone https://github.com/bedomax/countryTV.git
-cd countryTV
+git clone https://github.com/bedomax/countrytv24.com.git
+cd countrytv24.com
 
 # Install dependencies
 npm install
@@ -122,7 +122,7 @@ npm run appletv       # AppleTV app (coming soon)
 ## 📁 Project Structure
 
 ```
-countryTV/
+countrytv24.com/
 ├── apps/
 │   ├── web/              # Web application
 │   │   └── public/       # Static files (HTML, CSS, JS)
@@ -290,9 +290,9 @@ MIT License - feel free to use this project for your own country music streaming
 
 ---
 
-## 🎵 About Country TV
+## 🎵 About CountryTV24
 
-Country TV is a passion project that brings the authentic feel of live country music broadcasting to the web. Built with modern technologies but designed to feel like classic TV, it combines the best of Billboard's country charts with the immersive experience of live television.
+CountryTV24 is a passion project that brings the authentic feel of live country music broadcasting to the web. Built with modern technologies but designed to feel like classic TV, it combines the best of Billboard's country charts with the immersive experience of live television.
 
 **Key Features:**
 - 🤠 **Authentic Country Experience** - Real Billboard charts, not algorithms

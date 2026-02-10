@@ -1,4 +1,4 @@
-# Claude Commands - Country TV
+# Claude Commands - CountryTV24
 
 Custom slash commands for Git workflow automation and code review in Claude Code.
 
@@ -582,5 +582,5 @@ See [Claude Code Docs](https://docs.claude.com/en/docs/claude-code) for more inf
 
 ---
 
-**Created for**: Country TV Project
+**Created for**: CountryTV24 Project
 **Last Updated**: 2025-10-22
