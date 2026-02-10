@@ -18,9 +18,26 @@ $ARGUMENTS
 
 You **MUST** consider the user input before proceeding (if not empty).
 
+## GitHub Issue Integration
+
+**Before anything else**, check if `$ARGUMENTS` matches a GitHub issue reference pattern (e.g., `#4`, `#12`, `issue 4`, `issue #4`).
+
+If it does:
+1. Extract the issue number
+2. Run: `gh issue view <NUMBER> --json title,body,comments,labels`
+3. Use the issue **title** as the feature name
+4. Use the issue **body** as the feature description
+5. Include relevant **comments** (especially answers to clarification questions) as additional context
+6. Include **labels** for classification hints
+7. Format all of this as the feature description input for the spec generation below
+
+This allows the user to simply type `/speckit.specify #4` and get a full spec from the GitHub issue context including any conversation that happened there.
+
+If `$ARGUMENTS` does NOT match an issue pattern, treat it as a direct feature description (original behavior).
+
 ## Outline
 
-The text the user typed after `/speckit.specify` in the triggering message **is** the feature description. Assume you always have it available in this conversation even if `$ARGUMENTS` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
+The text the user typed after `/speckit.specify` in the triggering message **is** the feature description (or a GitHub issue reference that was resolved above). Assume you always have it available in this conversation even if `$ARGUMENTS` appears literally below. Do not ask the user to repeat it unless they provided an empty command.
 
 Given that feature description, do this:
 
