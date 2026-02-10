@@ -70,12 +70,9 @@ jobs:
           PR_DELETIONS: ${{ fromJSON(steps.pr-metadata.outputs.result).deletions }}
           PR_BODY: ${{ fromJSON(steps.pr-metadata.outputs.result).body }}
         run: |
-          # Install dependencies in temp dir to avoid lockfile conflicts
-          mkdir -p /tmp/claude-deps && cd /tmp/claude-deps
-          npm init -y > /dev/null 2>&1
-          npm install @anthropic-ai/sdk mem0ai
-          export NODE_PATH=/tmp/claude-deps/node_modules
-          cd $GITHUB_WORKSPACE
+          # Install dependencies (remove lockfile to avoid conflicts)
+          rm -f package-lock.json
+          npm install --no-save @anthropic-ai/sdk mem0ai
 
           # Run Claude review script
           node .github/scripts/claude-review.js

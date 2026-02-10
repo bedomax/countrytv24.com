@@ -22,15 +22,13 @@ jobs:
 
       - name: Install dependencies
         run: |
-          mkdir -p /tmp/claude-deps && cd /tmp/claude-deps
-          npm init -y > /dev/null 2>&1
-          npm install @anthropic-ai/sdk mem0ai
+          rm -f package-lock.json
+          npm install --no-save @anthropic-ai/sdk mem0ai
 
       - name: Run Claude Issue Planner
         env:
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
           MEM0_API_KEY: ${{ secrets.MEM0_API_KEY }}
-          NODE_PATH: /tmp/claude-deps/node_modules
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
           ISSUE_NUMBER: ${{ github.event.issue.number }}
