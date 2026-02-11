@@ -395,6 +395,22 @@ function setupUI() {
     const closeMemoryBtn = document.getElementById('close-memory');
     if (closeMemoryBtn) closeMemoryBtn.addEventListener('click', closeMemorySidebar);
 
+    // About button
+    const aboutBtn = document.getElementById('about-btn');
+    if (aboutBtn) aboutBtn.addEventListener('click', toggleAboutModal);
+
+    // Close about button
+    const closeAboutBtn = document.getElementById('close-about');
+    if (closeAboutBtn) closeAboutBtn.addEventListener('click', closeAboutModal);
+
+    // Close about on backdrop click
+    const aboutOverlay = document.getElementById('about-overlay');
+    if (aboutOverlay) {
+        aboutOverlay.addEventListener('click', (e) => {
+            if (e.target === aboutOverlay) closeAboutModal();
+        });
+    }
+
     // Click anywhere to start/unmute
     document.addEventListener('click', handleUserInteraction);
     document.addEventListener('touchstart', handleUserInteraction);
@@ -430,8 +446,8 @@ function handleYeehawClick() {
 
 // Handle user interaction (click/touch)
 function handleUserInteraction(event) {
-    // Don't interfere with control button clicks, yeehaw button, or sidebars
-    if (event.target.closest('.control-btn') || event.target.closest('#yeehaw-button') || event.target.closest('.memory-sidebar')) {
+    // Don't interfere with control button clicks, yeehaw button, sidebars, or about overlay
+    if (event.target.closest('.control-btn') || event.target.closest('#yeehaw-button') || event.target.closest('.memory-sidebar') || event.target.closest('.about-overlay')) {
         return;
     }
     
@@ -466,6 +482,20 @@ function closePlaylist() {
     sidebar.classList.remove('open');
 }
 
+// Toggle About modal
+function toggleAboutModal() {
+    closePlaylist();
+    closeMemorySidebar();
+    const overlay = document.getElementById('about-overlay');
+    if (overlay) overlay.classList.toggle('open');
+}
+
+// Close About modal
+function closeAboutModal() {
+    const overlay = document.getElementById('about-overlay');
+    if (overlay) overlay.classList.remove('open');
+}
+
 // Idle timer functionality removed - keep everything always visible
 
 // Keyboard controls
@@ -491,9 +521,12 @@ document.addEventListener('keydown', (e) => {
         }
     } else if (e.key === 'p' || e.key === 'P') {
         togglePlaylist();
+    } else if (e.key === 'i' || e.key === 'I') {
+        toggleAboutModal();
     } else if (e.key === 'Escape') {
         closePlaylist();
         closeMemorySidebar();
+        closeAboutModal();
     }
 });
 
