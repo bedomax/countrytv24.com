@@ -517,7 +517,7 @@ body:hover {
     font-size: 1.5rem;
     font-weight: 900;
     color: rgba(255, 255, 255, 0.4);
-    min-width: 40px;
+    min-width: 44px;
 }
 
 .song-details h4 {

@@ -282,7 +282,7 @@ function renderPlaylist() {
 
         item.innerHTML = `
             <div class="song-info-item">
-                <div class="song-number">#${song.position}</div>
+                <div class="song-number">#${String(index + 1).padStart(2, '0')}</div>
                 <div class="song-details">
                     <h4>${song.title} ${newBadge}</h4>
                     <p>${song.artist}</p>
